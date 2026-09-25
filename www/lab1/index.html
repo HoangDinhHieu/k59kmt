@@ -49,7 +49,7 @@
     <!-- Khung thông báo trạng thái -->
     <div id="statusMessage" class="hidden p-3.5 rounded-xl text-sm mb-6 transition-all duration-300"></div>
 
-    <!-- Bảng danh sách sinh viên tone hồng -->
+    <!-- Bảng danh sách sinh viên -->
     <div class="overflow-x-auto rounded-xl border border-pink-100 shadow-sm">
       <table class="w-full text-left border-collapse">
         <thead>
@@ -60,7 +60,12 @@
           </tr>
         </thead>
         <tbody id="studentTableBody" class="divide-y divide-pink-50">
-          <!-- Dữ liệu render ra đây -->
+          <!-- Hiển thị mặc định khi chưa gọi API -->
+          <tr id="emptyRow">
+            <td colspan="3" class="p-8 text-center text-pink-400 font-medium bg-pink-50/30">
+              🌸 Chưa có dữ liệu. Hãy bấm nút <b>"Gọi API Lấy Dữ Liệu"</b> ở trên để tải danh sách.
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -68,18 +73,20 @@
   </div>
 
   <script>
-    // Danh sách 5 sinh viên mặc định ban đầu
-    const defaultStudents = [
-      { name: "Cọp 🐯", money: 123 },
-      { name: "David 🧑‍💻", money: 456 },
-      { name: "Nguyễn Văn A 🌸", money: 789 },
-      { name: "Trần Thị B 🎀", money: 321 },
-      { name: "Lê Văn C 🚀", money: 654 }
-    ];
-
-    // Hàm render bảng dữ liệu
+    // Hàm render danh sách từ dữ liệu API
     function renderTable(list) {
       const tbody = document.getElementById('studentTableBody');
+      
+      if (!list || list.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="3" class="p-8 text-center text-pink-400 font-medium bg-pink-50/30">
+              Dữ liệu trống từ API!
+            </td>
+          </tr>`;
+        return;
+      }
+
       tbody.innerHTML = '';
       list.forEach((sv, index) => {
         const row = `
@@ -96,10 +103,7 @@
       });
     }
 
-    // Hiển thị ban đầu
-    renderTable(defaultStudents);
-
-    // Hàm gọi API
+    // Hàm gọi API khi nhấn nút
     async function goiAPI() {
       const btn = document.getElementById('fetchBtn');
       const btnText = document.getElementById('btnText');
@@ -115,7 +119,7 @@
       btnText.innerText = 'Đang gọi API...';
       
       statusDiv.className = 'p-3.5 rounded-xl text-sm bg-pink-100 text-pink-700 block mb-6 font-medium flex items-center gap-2';
-      statusDiv.innerHTML = '<span class="animate-spin">⏳</span> Đang kết nối tới máy chủ...';
+      statusDiv.innerHTML = '<span class="animate-spin">⏳</span> Đang kết nối tới máy chủ Node-RED...';
 
       try {
         const res = await fetch('/api/tacke');
@@ -124,6 +128,7 @@
         if (data.ok === 1) {
           statusDiv.className = 'p-3.5 rounded-xl text-sm bg-emerald-50 border border-emerald-200 text-emerald-700 block mb-6 font-medium';
           statusDiv.innerHTML = `🎉 <b>Thành công:</b> ${data.msg}`;
+          // Chỉ hiển thị bảng khi có dữ liệu từ API
           renderTable(data.dssv);
         } else {
           throw new Error(data.msg || 'Dữ liệu không hợp lệ');
@@ -132,14 +137,15 @@
         statusDiv.className = 'p-3.5 rounded-xl text-sm bg-rose-50 border border-rose-200 text-rose-700 block mb-6 font-medium';
         statusDiv.innerHTML = `❌ <b>Lỗi:</b> ${err.message}`;
       } finally {
-        // 2. Hoàn tất & Trở lại bình thường
+        // 2. Hoàn tất & Mở khóa nút
         btn.disabled = false;
         btn.classList.remove('opacity-80', 'cursor-not-allowed');
         loadingIcon.classList.add('hidden');
         sparkleIcon.classList.remove('hidden');
-        btnText.innerText = 'Gọi API Lấy Dữ Liệu';
+        btnText.innerText = 'Tải Lại Dữ Liệu API';
       }
     }
   </script>
 </body>
 </html>
+
