@@ -1,24 +1,145 @@
+
 <!DOCTYPE html>
 <html lang="vi">
-<head><meta charset="UTF-8"><title>Lab1</title></head>
-<body>
-<h1>Day la Lab1 - ngaymaiconang.id.vn</h1>
-<button onclick="goiAPI()">Goi API</button>
-<div id="ketqua"></div>
-<script>
-function goiAPI() {
-  fetch('/api/tacke')
-    .then(res => res.json())
-    .then(data => {
-      let html = '<table border="1"><tr><th>Ten</th><th>So tien</th></tr>';
-      data.dssv.forEach(sv => {
-        html += `<tr><td>${sv.name}</td><td>${sv.money}</td></tr>`;
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lab1 - Quản lý Sinh viên (Tone Hồng)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulse-heart {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+    .animate-heart {
+      animation: pulse-heart 1.5s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-pink-50 min-h-screen p-4 md:p-8 font-sans">
+  <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl p-6 border border-pink-100">
+    
+    <!-- Tiêu đề với Icon Trái tim nhịp đập -->
+    <div class="flex items-center justify-between border-b border-pink-100 pb-4 mb-6">
+      <h1 class="text-2xl md:text-3xl font-extrabold text-pink-600 flex items-center gap-2">
+        <span>Day la Lab1 - ngaymaiconang.id.vn</span>
+        <span class="inline-block animate-heart text-pink-500">💖</span>
+      </h1>
+      <span class="bg-pink-100 text-pink-700 text-xs font-semibold px-3 py-1 rounded-full border border-pink-200">v2.0 Pink Edition</span>
+    </div>
+
+    <!-- Nút Gọi API kết hợp Icon Spinner động -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <button id="fetchBtn" onclick="goiAPI()" class="bg-pink-500 hover:bg-pink-600 active:scale-95 text-white font-semibold py-2.5 px-5 rounded-xl shadow-md hover:shadow-pink-200 transition-all duration-200 flex items-center gap-2">
+        <!-- Spinner động SVG -->
+        <svg id="loadingIcon" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <!-- Icon lấp lánh mặc định -->
+        <svg id="sparkleIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4m0 0l-2-2m2 2l2-2m0 0l2 2M19 13v4m0 0l-2-2m2 2l2-2m0 0l2 2M12 3v3m0 0l-2-2m2 2l2-2m0 0l2 2M12 18v3m0 0l-2-2m2 2l2-2m0 0l2 2"></path>
+        </svg>
+        <span id="btnText">Gọi API Lấy Dữ Liệu</span>
+      </button>
+
+      <span class="text-sm text-pink-400 font-medium italic">✨ Dữ liệu đồng bộ trực tiếp từ Node-RED</span>
+    </div>
+
+    <!-- Khung thông báo trạng thái -->
+    <div id="statusMessage" class="hidden p-3.5 rounded-xl text-sm mb-6 transition-all duration-300"></div>
+
+    <!-- Bảng danh sách sinh viên tone hồng -->
+    <div class="overflow-x-auto rounded-xl border border-pink-100 shadow-sm">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-pink-100 text-pink-800 text-sm font-semibold">
+            <th class="p-3.5">#</th>
+            <th class="p-3.5">Tên Sinh Viên</th>
+            <th class="p-3.5">Số Tiền (VND)</th>
+          </tr>
+        </thead>
+        <tbody id="studentTableBody" class="divide-y divide-pink-50">
+          <!-- Dữ liệu render ra đây -->
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script>
+    // Danh sách 5 sinh viên mặc định ban đầu
+    const defaultStudents = [
+      { name: "Cọp 🐯", money: 123 },
+      { name: "David 🧑‍💻", money: 456 },
+      { name: "Nguyễn Văn A 🌸", money: 789 },
+      { name: "Trần Thị B 🎀", money: 321 },
+      { name: "Lê Văn C 🚀", money: 654 }
+    ];
+
+    // Hàm render bảng dữ liệu
+    function renderTable(list) {
+      const tbody = document.getElementById('studentTableBody');
+      tbody.innerHTML = '';
+      list.forEach((sv, index) => {
+        const row = `
+          <tr class="hover:bg-pink-50/60 transition-colors duration-150">
+            <td class="p-3.5 font-medium text-pink-400">${index + 1}</td>
+            <td class="p-3.5 font-bold text-gray-700 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-pink-400"></span>
+              ${sv.name}
+            </td>
+            <td class="p-3.5 text-pink-600 font-extrabold">${sv.money.toLocaleString('vi-VN')} đ</td>
+          </tr>
+        `;
+        tbody.innerHTML += row;
       });
-      html += '</table>';
-      document.getElementById('ketqua').innerHTML = html;
-    })
-    .catch(err => { document.getElementById('ketqua').innerHTML = 'Loi: ' + err; });
-}
-</script>
+    }
+
+    // Hiển thị ban đầu
+    renderTable(defaultStudents);
+
+    // Hàm gọi API
+    async function goiAPI() {
+      const btn = document.getElementById('fetchBtn');
+      const btnText = document.getElementById('btnText');
+      const loadingIcon = document.getElementById('loadingIcon');
+      const sparkleIcon = document.getElementById('sparkleIcon');
+      const statusDiv = document.getElementById('statusMessage');
+
+      // 1. Trạng thái Đang tải
+      btn.disabled = true;
+      btn.classList.add('opacity-80', 'cursor-not-allowed');
+      loadingIcon.classList.remove('hidden');
+      sparkleIcon.classList.add('hidden');
+      btnText.innerText = 'Đang gọi API...';
+      
+      statusDiv.className = 'p-3.5 rounded-xl text-sm bg-pink-100 text-pink-700 block mb-6 font-medium flex items-center gap-2';
+      statusDiv.innerHTML = '<span class="animate-spin">⏳</span> Đang kết nối tới máy chủ...';
+
+      try {
+        const res = await fetch('/api/tacke');
+        const data = await res.json();
+
+        if (data.ok === 1) {
+          statusDiv.className = 'p-3.5 rounded-xl text-sm bg-emerald-50 border border-emerald-200 text-emerald-700 block mb-6 font-medium';
+          statusDiv.innerHTML = `🎉 <b>Thành công:</b> ${data.msg}`;
+          renderTable(data.dssv);
+        } else {
+          throw new Error(data.msg || 'Dữ liệu không hợp lệ');
+        }
+      } catch (err) {
+        statusDiv.className = 'p-3.5 rounded-xl text-sm bg-rose-50 border border-rose-200 text-rose-700 block mb-6 font-medium';
+        statusDiv.innerHTML = `❌ <b>Lỗi:</b> ${err.message}`;
+      } finally {
+        // 2. Hoàn tất & Trở lại bình thường
+        btn.disabled = false;
+        btn.classList.remove('opacity-80', 'cursor-not-allowed');
+        loadingIcon.classList.add('hidden');
+        sparkleIcon.classList.remove('hidden');
+        btnText.innerText = 'Gọi API Lấy Dữ Liệu';
+      }
+    }
+  </script>
 </body>
 </html>
