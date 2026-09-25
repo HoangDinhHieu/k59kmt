@@ -53,4 +53,5 @@ Cấu hình Nginx proxy `/api/` từ domain thật tới Node-RED.
 ### 7. `feat: hoan thanh JS goi API va hien thi du lieu, them anh minh chung`
 Viết JavaScript trong trang HTML gọi API và hiển thị bảng dữ liệu.
 
-![Kết quả gọi API](images/lab1-api-result.png)
+<img width="1920" height="1026" alt="image" src="https://github.com/user-attachments/assets/aa4d4475-a6ff-44fd-ae2e-d1d62922b4c5" />
+
